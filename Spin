@@ -1,0 +1,49 @@
+local Players = game:GetService("Players")
+
+-- Connect to the PlayerAdded event
+Players.PlayerAdded:Connect(function(player)
+    -- Get the player's character and head
+    local character = player.Character
+    local head = character:WaitForChild("Head")
+    
+    -- Function to smooth the head's rotation
+    local function smoothHeadRotation(targetAngle)
+        local currentAngle = head.Orientation
+        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
+        
+        local tween = game:GetService("TweenService"):Create(head, tweenInfo, { Orientation = targetAngle })
+        tween:Play()
+    end
+    
+    -- Constants for the maximum horizontal and vertical angles
+    local maxHorizontalAngle = math.rad(80)
+    local maxVerticalAngle = math.rad(30)
+    
+    -- Spin variables
+    local spinSpeed = 10 -- degrees per second
+    local elapsedTime = 0
+    
+    -- Main loop
+    while true do
+        -- Update the elapsed time
+        elapsedTime = elapsedTime + tick()
+        
+        -- Calculate the desired angle
+        local desiredAngle = elapsedTime * spinSpeed % (math.pi * 2)
+        
+        -- Keep the horizontal angle within bounds
+        local horizontalAngle = math.max(-maxHorizontalAngle, math.min(maxHorizontalAngle, desiredAngle))
+        
+        -- Convert the horizontal angle to quaternion form
+        local headingQuaternion = Quaternion.FromAxisAngle(Vector3.new(0, -1, 0), horizontalAngle)
+        
+        -- Combine the horizontal and vertical components
+        local targetAngle = headingQuaternion * Quaternion.FromAxisAngle(head.Up, math.clamp(desiredAngle, -maxVerticalAngle, maxVerticalAngle))
+        
+        -- Smoothly transition to the target angle
+        smoothHeadRotation(targetAngle:ToEulerAnglesXYZ())
+        
+        -- Wait for the frame to complete
+        wait()
+    end
+end)
